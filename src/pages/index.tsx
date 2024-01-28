@@ -1,118 +1,278 @@
-import Image from "next/image";
-import { Inter } from "next/font/google";
+import Button from '@/components/button'
+import { Inter } from 'next/font/google'
+import { Cluster, LuzidSdk } from '@luzid/sdk'
+import * as anchor from '@coral-xyz/anchor'
+import * as web3 from '@solana/web3.js'
+import { useEffect, useState } from 'react'
+import BrowserWallet from '@/lib/browser-wallet'
+import toast, { toastConfig } from 'react-simple-toasts'
+import 'react-simple-toasts/dist/theme/dark.css'
+import { TABLE_CELL_CLASS, TIC_TAC_TOE_PROGRAM_ID } from '@/lib/consts'
+import { GameState, TicTacToe } from '@/lib/types'
+import idl from '../../idl/tictactoe.json'
+import { GameWeb3 } from '@/lib/web3-methods'
+import { GameLuzid } from '@/lib/luzid-methods'
+import { Board } from '@/components/board'
+import Link from '@/components/link'
+import { O_WINNING } from '@/lib/game-states'
 
-const inter = Inter({ subsets: ["latin"] });
+toastConfig({ theme: 'dark' })
+const inter = Inter({ subsets: ['latin'] })
+
+// -----------------
+// Setup
+// -----------------
+// Accounts used for this Game (they are refreshed on each page load)
+const gameKeypair = web3.Keypair.generate()
+const playerOne = web3.Keypair.generate()
+const playerTwo = web3.Keypair.generate()
+
+// Connections and Providers
+const luzid = new LuzidSdk()
+const conn = new web3.Connection(Cluster.Development.apiUrl, 'confirmed')
+
+const wallet = new BrowserWallet(playerOne)
+const provider = new anchor.AnchorProvider(conn, wallet, {
+  commitment: 'confirmed',
+  skipPreflight: true,
+})
+const program = new anchor.Program(
+  idl as TicTacToe,
+  TIC_TAC_TOE_PROGRAM_ID,
+  provider
+)
+
+const gameWeb3 = new GameWeb3(program, conn, gameKeypair, playerOne, playerTwo)
+const gameLuzid = new GameLuzid(luzid, conn, gameKeypair, playerOne, playerTwo)
 
 export default function Home() {
+  const [gameState, setGameState] = useState<GameState | null>(null)
+  const [gameFunds, setGameFunds] = useState(0)
+  const [playerOneFunds, setPlayerOneFunds] = useState(0)
+  const [currentPlayer, setCurrentPlayer] = useState(playerOne)
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    const nextPlayer = (gameState?.turn ?? 0) % 2 === 0 ? playerTwo : playerOne
+    setCurrentPlayer(nextPlayer)
+  }, [gameState])
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  if (!isClient) {
+    return null
+  }
+
+  async function updateFunds() {
+    const gameFunds = await gameWeb3.getAccountFunds(gameKeypair.publicKey)
+    setGameFunds(gameFunds)
+    const playerOneFunds = await gameWeb3.getAccountFunds(playerOne.publicKey)
+    setPlayerOneFunds(playerOneFunds)
+  }
+
+  async function handlePlay(row: number, col: number) {
+    await gameLuzid.takeSnapshot()
+
+    const gameState = await gameWeb3.play(currentPlayer, row, col)
+    console.log(JSON.stringify(gameState, null, 2))
+    setGameState(gameState)
+
+    const nextPlayer = currentPlayer === playerOne ? playerTwo : playerOne
+    setCurrentPlayer(nextPlayer)
+
+    await updateFunds()
+  }
   return (
     <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
+      className={`flex min-h-screen flex-col items-center justify-between p-4 ${inter.className}`}
     >
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/pages/index.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      {/*-- Game */}
+      <div className="flex">
+        {/*
+            Game: Luzid Actions
+        */}
+
+        <div className="flex-auto dark:text-white max-w-sm p-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+          <h3>Luzid Actions</h3>
+
+          <Button
+            onClick={async () => {
+              await gameLuzid.cloneTictactoeProgram()
+              toast('TicTacToe Program Cloned')
+            }}
           >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+            1. Clone Program
+          </Button>
+          <Button
+            onClick={async () => {
+              const snapshotId = await gameLuzid.restoreLastUpdatedSnapshot()
+              console.log('Restored Snapshot:', snapshotId)
+
+              const gameState = await gameWeb3.fetchGameState()
+              setGameState(gameState)
+              await updateFunds()
+
+              toast('Snapshot Restored')
+            }}
+          >
+            Undo Last Action
+          </Button>
+          <Button
+            onClick={async () => {
+              // 1. Modify
+              {
+                const gameState = await gameWeb3.fetchGameState()
+                await gameLuzid.modifyGameState(program, {
+                  ...gameState,
+                  ...O_WINNING,
+                } as unknown as GameState)
+              }
+              // 2. Fetch modified game
+              {
+                const gameState = await gameWeb3.fetchGameState()
+                setGameState(gameState)
+
+                await updateFunds()
+              }
+
+              toast('Game State Updated')
+            }}
+          >
+            Set Winning State
+          </Button>
+          <Button
+            onClick={async () => {
+              const version = await gameLuzid.restartValidator()
+              toast(`Validator Restarted: ${version['solana-core']}`)
+            }}
+          >
+            Restart Validator
+          </Button>
+        </div>
+        {/*
+            Game: Game State and TicTacToe Board
+        */}
+        <div className="flex-initial w-44 dark:text-white max-w-sm p-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+          <h3>Game State</h3>
+
+          <Board
+            board={gameState?.board ?? [[], [], []]}
+            onPlay={handlePlay}
+            state={gameState?.state}
+            nextPlayer={currentPlayer === playerOne ? 'X' : 'O'}
+          />
+        </div>
+
+        {/*
+            Game: Web3 Actions
+        */}
+
+        <div className="flex-auto dark:text-white max-w-sm p-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+          <h3>Web3 Actions</h3>
+          <Button
+            onClick={async () => {
+              await gameWeb3.fundAccount(playerOne.publicKey)
+              await updateFunds()
+              toast('Player Funded')
+            }}
+          >
+            2. Fund Main Player
+          </Button>
+          <Button
+            onClick={async () => {
+              const gameState = await gameWeb3.setupGame()
+              setGameState(gameState)
+              await updateFunds()
+
+              toast('Game Created')
+            }}
+          >
+            3. Create Game
+          </Button>
         </div>
       </div>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+      {/* Table with Game Info */}
+      <table className="border border-slate-400 border-separate border-spacing-2.52 mt-4">
+        <tbody>
+          <tr>
+            <td className={TABLE_CELL_CLASS}>Game</td>
+            <td className={TABLE_CELL_CLASS}>
+              ◎{(gameFunds / web3.LAMPORTS_PER_SOL).toFixed(6)} SOL
+            </td>
+            <td className={TABLE_CELL_CLASS}>
+              <Link
+                href={`https://explorer.solana.com/address/${gameKeypair.publicKey.toString()}/anchor-account?cluster=custom&customUrl=http%3A%2F%2Flocalhost%3A8899`}
+              >
+                {gameKeypair.publicKey.toString()}
+              </Link>
+            </td>
+          </tr>
+          <tr>
+            <td className={TABLE_CELL_CLASS}>Player One</td>
+            <td className={TABLE_CELL_CLASS}>
+              ◎{(playerOneFunds / web3.LAMPORTS_PER_SOL).toFixed(6)} SOL
+            </td>
+            <td className={TABLE_CELL_CLASS}>
+              <Link
+                href={`https://explorer.solana.com/address/${playerOne.publicKey.toString()}/anchor-account?cluster=custom&customUrl=http%3A%2F%2Flocalhost%3A8899`}
+              >
+                {playerOne.publicKey.toString()}
+              </Link>
+            </td>
+          </tr>
+          <tr>
+            <td className={TABLE_CELL_CLASS}>Player Two</td>
+            <td className={TABLE_CELL_CLASS}>◎0 SOL</td>
+            <td className={TABLE_CELL_CLASS}>
+              <Link
+                href={`https://explorer.solana.com/address/${playerTwo.publicKey.toString()}/anchor-account?cluster=custom&customUrl=http%3A%2F%2Flocalhost%3A8899`}
+              >
+                {playerTwo.publicKey.toString()}
+              </Link>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
+      {/* Bottom section (not important) */}
+      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-2 lg:text-left">
         <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
+          href="https://luzid.app"
           className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
           target="_blank"
           rel="noopener noreferrer"
         >
           <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
+            luzid.app{' '}
             <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
               -&gt;
             </span>
           </h2>
           <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
+            Start building on Solana at Light Speed.
           </p>
         </a>
 
         <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
+          href="https://luzid.app/docs/ts"
           className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
           target="_blank"
           rel="noopener noreferrer"
         >
           <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
+            SDK Docs{' '}
             <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
               -&gt;
             </span>
           </h2>
           <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
+            Become proficient at interacting with Luzid via its SDK.
           </p>
         </a>
       </div>
     </main>
-  );
+  )
 }
