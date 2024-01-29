@@ -144,6 +144,14 @@ export default function Home() {
           </Button>
           <Button
             onClick={async () => {
+              const snapshotIds = await gameLuzid.deleteAppSnapshots()
+              toast(`${snapshotIds.length} App Snapshots Removed`)
+            }}
+          >
+            Remove App Snapshots
+          </Button>
+          <Button
+            onClick={async () => {
               const version = await gameLuzid.restartValidator()
               toast(`Validator Restarted: ${version['solana-core']}`)
             }}
@@ -194,7 +202,9 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Table with Game Info */}
+      {/*
+          Table with Game Info
+      */}
       <table className="border border-slate-400 border-separate border-spacing-2.52 mt-4">
         <tbody>
           <tr>
@@ -237,7 +247,9 @@ export default function Home() {
         </tbody>
       </table>
 
-      {/* Bottom section (not important) */}
+      {/*
+          Bottom section (not important)
+      */}
       <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-2 lg:text-left">
         <a
           href="https://luzid.app"

@@ -62,4 +62,10 @@ export class GameLuzid {
       ).setData(data, { size })
     )
   }
+
+  async deleteAppSnapshots() {
+    return this.luzid.snapshot.deleteSnapshotsMatching({
+      group: SNAPSHOT_GROUP,
+    })
+  }
 }

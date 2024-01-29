@@ -1,3 +1,5 @@
+const buildingGhPages = process.env.CI != null
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -6,14 +8,14 @@ const nextConfig = {
    *
    * @see https://nextjs.org/docs/app/building-your-application/deploying/static-exports
    */
-  output: 'export',
+  output: buildingGhPages ? 'export' : 'standalone',
 
   /**
    * Set base path. This is the slug of your GitHub repository.
    *
    * @see https://nextjs.org/docs/app/api-reference/next-config-js/basePath
    */
-  basePath: '/ex-tictactoe.web',
+  basePath: buildingGhPages ? '/ex-tictactoe.web' : '',
 
   /**
    * Disable server-based image optimization. Next.js does not support
