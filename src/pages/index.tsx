@@ -269,7 +269,7 @@ export default function Home() {
           src="https://www.youtube.com/embed/M09YWUicVF0?si=qKie6uvErBkTF6RW"
           title="YouTube video player"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowfullscreen
+          allowFullScreen
         ></iframe>
       </div>
 
