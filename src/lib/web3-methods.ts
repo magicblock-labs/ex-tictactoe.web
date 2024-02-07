@@ -16,10 +16,11 @@ export class GameWeb3 {
       pubkey,
       web3.LAMPORTS_PER_SOL
     )
-    return this.conn.confirmTransaction({
+    await this.conn.confirmTransaction({
       signature,
       ...(await this.conn.getLatestBlockhash()),
     })
+    return signature
   }
 
   async fetchGameState(): Promise<GameState> {
@@ -29,7 +30,7 @@ export class GameWeb3 {
   }
 
   async setupGame() {
-    await this.program.methods
+    const signature = await this.program.methods
       .setupGame(this.playerTwo.publicKey)
       .accounts({
         game: this.gameKeypair.publicKey,
@@ -38,15 +39,16 @@ export class GameWeb3 {
       .signers([this.gameKeypair])
       .rpc()
 
-    return this.fetchGameState()
+    const gameState = await this.fetchGameState()
+    return { signature, gameState }
   }
 
   async play(
     player: web3.Keypair,
     row: number,
     col: number
-  ): Promise<GameState> {
-    await this.program.methods
+  ): Promise<{ signature: string; gameState: GameState }> {
+    const signature = await this.program.methods
       .play({ row, column: col })
       .accounts({
         game: this.gameKeypair.publicKey,
@@ -55,7 +57,8 @@ export class GameWeb3 {
       .signers([player])
       .rpc()
 
-    return this.fetchGameState()
+    const gameState = await this.fetchGameState()
+    return { signature, gameState }
   }
 
   async getAccountFunds(pubkey: web3.PublicKey) {

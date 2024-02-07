@@ -75,7 +75,14 @@ export default function Home() {
   async function handlePlay(row: number, col: number) {
     await gameLuzid.takeSnapshot()
 
-    const gameState = await gameWeb3.play(currentPlayer, row, col)
+    const { signature, gameState } = await gameWeb3.play(
+      currentPlayer,
+      row,
+      col
+    )
+    const piece = currentPlayer === playerOne ? 'X' : 'O'
+    gameLuzid.labelTransaction(signature, `Place ${piece} at (${row}, ${col})`)
+
     console.log(JSON.stringify(gameState, null, 2))
     setGameState(gameState)
 
@@ -181,7 +188,9 @@ export default function Home() {
           <h3>Web3 Actions</h3>
           <Button
             onClick={async () => {
-              await gameWeb3.fundAccount(playerOne.publicKey)
+              const signature = await gameWeb3.fundAccount(playerOne.publicKey)
+              gameLuzid.labelTransaction(signature, 'Fund Player One')
+
               await updateFunds()
               toast('Player Funded')
             }}
@@ -190,7 +199,11 @@ export default function Home() {
           </Button>
           <Button
             onClick={async () => {
-              const gameState = await gameWeb3.setupGame()
+              const { signature, gameState } = await gameWeb3.setupGame()
+              gameLuzid.labelTransaction(
+                signature,
+                `Create Game: ${gameKeypair.publicKey.toString()}`
+              )
               setGameState(gameState)
               await updateFunds()
 
@@ -250,7 +263,17 @@ export default function Home() {
       {/*
           Bottom section (not important)
       */}
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-2 lg:text-left">
+      <div className="">
+        <iframe
+          className="video"
+          src="https://www.youtube.com/embed/M09YWUicVF0?si=qKie6uvErBkTF6RW"
+          title="YouTube video player"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen
+        ></iframe>
+      </div>
+
+      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-3 lg:text-left">
         <a
           href="https://luzid.app"
           className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
@@ -268,6 +291,22 @@ export default function Home() {
           </p>
         </a>
 
+        <a
+          href="https://github.com/luzid-app/ex-tictactoe.web"
+          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <h2 className={`mb-3 text-2xl font-semibold`}>
+            Game Source{' '}
+            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
+              -&gt;
+            </span>
+          </h2>
+          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
+            Read through the source code of this game.
+          </p>
+        </a>
         <a
           href="https://luzid.app/docs/ts"
           className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"

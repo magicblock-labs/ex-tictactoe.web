@@ -68,4 +68,8 @@ export class GameLuzid {
       group: SNAPSHOT_GROUP,
     })
   }
+
+  labelTransaction(signature: string, label: string) {
+    return this.luzid.transaction.labelTransaction(signature, label)
+  }
 }

@@ -104,12 +104,12 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@luzid/grpc-client@^0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@luzid/grpc-client/-/grpc-client-0.0.1.tgz#5b4080fea7e6ba4b3fc19a68d52be9736bda6f61"
-  integrity sha512-QhAZcp/zxYmfPSDgLZT4cMgU1NORYH80kKX0GYevawIo6IL2gXVzQv6yhn8DUcnbChTkxMm4QjyjVxjrve+KJQ==
+"@luzid/grpc-client@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@luzid/grpc-client/-/grpc-client-0.0.2.tgz#fbe13603986956775313e1569972f802e7859f63"
+  integrity sha512-fHfdh+hHUVKo0ra59C1wE3j+1Q8hwWcznfd1DSxGhHdyW7en6GCRZrz74gaTFFrPWd7KOZJNPof8tSNqte7mcQ==
   dependencies:
-    "@luzid/grpc" "^0.0.1"
+    "@luzid/grpc" "^0.0.2"
     "@luzid/grpc-connection" "^0.0.1"
 
 "@luzid/grpc-connection@^0.0.1":
@@ -120,20 +120,20 @@
     nice-grpc "^2.1.7"
     nice-grpc-web "^3.3.2"
 
-"@luzid/grpc@^0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@luzid/grpc/-/grpc-0.0.1.tgz#cbdb2c3ca63d6964ca6b1ade1f5fb8e0efe6c910"
-  integrity sha512-ZV8FvdoR3cphXmzCTJceARVS5cMTUOM2/JeJCCTfiHsG6IyRnxQaw3pmOzxwXLZTF6B08jjZG5q3h2nUF3HQRw==
+"@luzid/grpc@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@luzid/grpc/-/grpc-0.0.2.tgz#ae0ee1e2b3f9a1836d5dd22e08386e51a1afac06"
+  integrity sha512-CJIjlJzHeTqNBJQIxb4SMBoibdrqUP2DtFyjFCEJblyZITEwP1jadsuV4yQ5CPhNgxUE1l6nw+qzK0H3C41aAw==
   dependencies:
     long "^5.2.3"
 
-"@luzid/sdk@^0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@luzid/sdk/-/sdk-0.0.1.tgz#57d921cc8560e47e1d0345e871f72eb11b8ee201"
-  integrity sha512-dDHo6XsJTEp2DV/OFyCSyesHoLmaj3ikDSYBq+Rzbj5fQMATx18Pg7K3VUpU3qvFOiZmQFTzx9Vp1FN42EwKmQ==
+"@luzid/sdk@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@luzid/sdk/-/sdk-0.0.2.tgz#d89cc9fbd9e81fed51ef0abcba2f55b92e79b192"
+  integrity sha512-NLABvxRk512l2S+284cT9xIygjjf3KcTD6LEeh2vft2XLQiz4DYNfq/0TL2bVrRhUN+oJzOX+RwiPxjnWE7GFw==
   dependencies:
-    "@luzid/grpc" "^0.0.1"
-    "@luzid/grpc-client" "^0.0.1"
+    "@luzid/grpc" "^0.0.2"
+    "@luzid/grpc-client" "^0.0.2"
 
 "@next/env@14.1.0":
   version "14.1.0"
