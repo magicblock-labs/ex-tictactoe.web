@@ -308,7 +308,7 @@ export default function Home() {
           </p>
         </a>
         <a
-          href="https://luzid.app/docs/ts"
+          href="https://luzid.app/luzid-sdk/docs/ts/classes/_luzid_sdk.luzid_sdk.LuzidSdk.html"
           className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
           target="_blank"
           rel="noopener noreferrer"
