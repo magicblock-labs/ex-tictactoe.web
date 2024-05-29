@@ -6,7 +6,7 @@ export default function Document() {
       <Head>
         <meta
           name="description"
-          content="Luzid: Solana Development at Light Speed Example"
+          content="MagicBlock: Solana Development at Light Speed Example"
         />
         <link rel="icon" href="/ex-tictactoe.web/favicon.ico" />
       </Head>

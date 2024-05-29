@@ -37,10 +37,10 @@ export function Board({
 
   return (
     <>
-      <div className="status pt-4">
+      <div className="status">
         <Status />
       </div>
-      <div className="mt-14 ml-3">
+      <div className="mt-4 ml-3">
         <div className="board-row">
           <Square
             value={renderTile(0, 0)}
