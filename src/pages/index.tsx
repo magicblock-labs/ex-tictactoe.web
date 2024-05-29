@@ -69,9 +69,7 @@ export default function Home() {
   }
 
   async function handlePlay(row: number, col: number) {
-    const { gameState } = await gameWeb3.play(currentPlayer, row, col)
-    console.log(JSON.stringify(gameState, null, 2))
-    setGameState(gameState)
+    await gameWeb3.play(currentPlayer, row, col)
 
     const nextPlayer = currentPlayer === playerOne ? playerTwo : playerOne
     setCurrentPlayer(nextPlayer)
@@ -115,10 +113,14 @@ export default function Home() {
           </Button>
           <Button
             onClick={async () => {
-              const { gameState } = await gameWeb3.setupGame()
-              setGameState(gameState)
-              await updateFunds()
+              const { gameStateSubscription } = await gameWeb3.setupGame()
+              gameStateSubscription.on('change', (state) => {
+                setGameState(state)
+              })
+              const state = await gameWeb3.fetchGameState()
+              setGameState(state)
 
+              await updateFunds()
               toast('Game Created')
             }}
           >

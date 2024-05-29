@@ -1,3 +1,4 @@
+import type EventEmitter from 'eventemitter3'
 import * as anchor from '@coral-xyz/anchor'
 import * as web3 from '@solana/web3.js'
 import { GameState, TicTacToe } from './types'
@@ -29,6 +30,10 @@ export class GameWeb3 {
     ) as Promise<GameState>
   }
 
+  gameStateSubscription(): EventEmitter {
+    return this.program.account.game.subscribe(this.gameKeypair.publicKey)
+  }
+
   async setupGame() {
     const signature = await this.program.methods
       .setupGame(this.playerTwo.publicKey)
@@ -39,15 +44,15 @@ export class GameWeb3 {
       .signers([this.gameKeypair])
       .rpc()
 
-    const gameState = await this.fetchGameState()
-    return { signature, gameState }
+    const gameStateSubscription = this.gameStateSubscription()
+    return { signature, gameStateSubscription }
   }
 
   async play(
     player: web3.Keypair,
     row: number,
     col: number
-  ): Promise<{ signature: string; gameState: GameState }> {
+  ): Promise<{ signature: string }> {
     const signature = await this.program.methods
       .play({ row, column: col })
       .accounts({
@@ -57,8 +62,7 @@ export class GameWeb3 {
       .signers([player])
       .rpc()
 
-    const gameState = await this.fetchGameState()
-    return { signature, gameState }
+    return { signature }
   }
 
   async getAccountFunds(pubkey: web3.PublicKey) {
