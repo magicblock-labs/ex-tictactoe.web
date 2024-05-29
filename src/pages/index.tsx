@@ -1,6 +1,5 @@
 import Button from '@/components/button'
 import { Inter } from 'next/font/google'
-import { Cluster } from '@luzid/sdk'
 import * as anchor from '@coral-xyz/anchor'
 import * as web3 from '@solana/web3.js'
 import { useEffect, useState } from 'react'
@@ -26,7 +25,8 @@ const playerOne = web3.Keypair.generate()
 const playerTwo = web3.Keypair.generate()
 
 // Connections and Providers
-const conn = new web3.Connection(Cluster.Development.apiUrl, 'confirmed')
+const LOCALHOST = 'http://localhost:8899'
+const conn = new web3.Connection(LOCALHOST, 'confirmed')
 
 const wallet = new BrowserWallet(playerOne)
 const provider = new anchor.AnchorProvider(conn, wallet, {
